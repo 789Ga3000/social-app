@@ -34,7 +34,9 @@ jobs:
 
       - name: Build Android APK
         run: |
-          cd apps/mobile/android
+          cd apps/mobile
+          npx expo prebuild --platform android --no-install
+          cd android
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
