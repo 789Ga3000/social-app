@@ -141,7 +141,12 @@ export default function UserProfileScreen() {
     );
   }
 
-  const renderPost = ({ item }: { item: any }) => <ProfileGridItem item={item} />;
+  const renderPost = ({ item, index }: { item: any; index: number }) => (
+    <ProfileGridItem 
+      item={item} 
+      onPress={() => router.push(`/post/${item.id}?userId=${profileData.id}&index=${index}`)} 
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

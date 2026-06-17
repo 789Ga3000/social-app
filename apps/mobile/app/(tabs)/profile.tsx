@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity, Linking, Modal, Pressable, ScrollView } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +14,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = getStyles(colors);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ['profile', user?.username],
@@ -41,7 +42,12 @@ export default function ProfileScreen() {
     );
   }
 
-  const renderPost = ({ item }: { item: any }) => <ProfileGridItem item={item} />;
+  const renderPost = ({ item, index }: { item: any; index: number }) => (
+    <ProfileGridItem 
+      item={item} 
+      onPress={() => router.push(`/post/${item.id}?userId=${user?.id}&index=${index}`)} 
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -52,8 +58,8 @@ export default function ProfileScreen() {
             <Text style={styles.creatorLevel}>{profileData.profile.creatorLevel}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-          <Text style={styles.logoutText}>Logout</Text>
+        <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuBtn}>
+          <Ionicons name="menu-outline" size={28} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -77,10 +83,6 @@ export default function ProfileScreen() {
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{profileData?.profile?.followingCount || 0}</Text>
             <Text style={styles.statLabel}>Following</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{profileData?.profile?.currentStreak || 0} 🔥</Text>
-            <Text style={styles.statLabel}>Streak</Text>
           </View>
         </View>
       </View>
@@ -113,32 +115,90 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <View style={styles.walletBanner}>
-        <View style={styles.walletInfo}>
-          <Text style={styles.walletBalance}>{profileData?.profile?.starsBalance || 0} ⭐</Text>
-          <Text style={styles.walletLabel}>Current Balance</Text>
-        </View>
-        <View style={{ flexDirection: 'column', gap: 8 }}>
-          <TouchableOpacity 
-            style={styles.walletButton}
-            onPress={() => router.push('/wallet' as any)}
-          >
-            <Text style={styles.walletButtonText}>Wallet</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.walletButton, { backgroundColor: '#6a0dad' }]}
-            onPress={() => router.push('/rewards' as any)}
-          >
-            <Text style={[styles.walletButtonText, { color: '#fff' }]}>Rewards & Missions</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <View style={styles.actionSection}>
         <TouchableOpacity style={styles.editProfileButton} onPress={() => router.push('/edit-profile' as any)}>
           <Text style={styles.editProfileText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalBackdrop} 
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+            <View style={styles.dragHandle} />
+            <Text style={styles.menuTitle}>Menu</Text>
+            
+            <ScrollView contentContainerStyle={styles.menuOptionsList}>
+              <TouchableOpacity 
+                style={styles.menuOption} 
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/wallet' as any);
+                }}
+              >
+                <Ionicons name="wallet-outline" size={22} color={colors.text} style={styles.menuIcon} />
+                <Text style={styles.menuOptionText}>Wallet ({profileData?.profile?.starsBalance || 0} ⭐)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuOption} 
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/rewards' as any);
+                }}
+              >
+                <Ionicons name="trophy-outline" size={22} color={colors.text} style={styles.menuIcon} />
+                <Text style={styles.menuOptionText}>Rewards & Missions</Text>
+              </TouchableOpacity>
+
+              <View style={styles.menuOptionDisabled}>
+                <Ionicons name="ribbon-outline" size={22} color={colors.textSecondary} style={styles.menuIcon} />
+                <View>
+                  <Text style={styles.menuOptionTextDisabled}>Creator Level</Text>
+                  <Text style={styles.menuOptionSubText}>{profileData?.profile?.creatorLevel || 'Bronze Creator 🥉'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.menuOptionDisabled}>
+                <Ionicons name="flame-outline" size={22} color={colors.textSecondary} style={styles.menuIcon} />
+                <View>
+                  <Text style={styles.menuOptionTextDisabled}>Streak</Text>
+                  <Text style={styles.menuOptionSubText}>{profileData?.profile?.currentStreak || 0} days 🔥</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.menuOption} 
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/edit-profile' as any);
+                }}
+              >
+                <Ionicons name="settings-outline" size={22} color={colors.text} style={styles.menuIcon} />
+                <Text style={styles.menuOptionText}>Settings</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.menuOption, styles.logoutOption]} 
+                onPress={() => {
+                  setMenuVisible(false);
+                  logout();
+                }}
+              >
+                <Ionicons name="log-out-outline" size={22} color={colors.danger} style={styles.menuIcon} />
+                <Text style={styles.logoutOptionText}>Logout</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
 
       {postsLoading ? (
         <ActivityIndicator style={{ marginTop: 20 }} />
@@ -169,8 +229,7 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   username: { fontSize: 20, fontWeight: 'bold', color: colors.text },
   creatorLevel: { fontSize: 13, color: colors.warningText, fontWeight: '600', marginTop: 2 },
-  logoutBtn: { padding: 6, backgroundColor: colors.dangerBg, borderRadius: 6 },
-  logoutText: { color: colors.danger, fontWeight: '600' },
+  menuBtn: { padding: 4 },
   profileInfo: {
     flexDirection: 'row',
     padding: 16,
@@ -238,32 +297,6 @@ const getStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
-  walletBanner: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: colors.walletBg,
-    borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.walletBorder,
-  },
-  walletInfo: {},
-  walletBalance: { fontSize: 20, fontWeight: 'bold', color: colors.warningText },
-  walletLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  walletButton: {
-    backgroundColor: colors.walletCardBg,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  walletButtonText: {
-    color: colors.walletCardText,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
   editProfileButton: {
     flex: 1,
     paddingVertical: 8,
@@ -274,4 +307,81 @@ const getStyles = (colors: any) => StyleSheet.create({
   },
   editProfileText: { fontWeight: '600', fontSize: 14, color: colors.text },
   gridContainer: { paddingTop: 2 },
+
+  // Bottom Sheet Styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 8,
+    paddingBottom: 32,
+    maxHeight: '80%',
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  menuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  menuOptionsList: {
+    paddingHorizontal: 16,
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  menuOptionDisabled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+    opacity: 0.85,
+  },
+  menuIcon: {
+    marginRight: 16,
+    width: 24,
+    textAlign: 'center',
+  },
+  menuOptionText: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  menuOptionTextDisabled: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  menuOptionSubText: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  logoutOption: {
+    borderBottomWidth: 0,
+  },
+  logoutOptionText: {
+    fontSize: 16,
+    color: colors.danger,
+    fontWeight: 'bold',
+  },
 });

@@ -108,12 +108,19 @@ export class UsersService {
         filtered.push(u);
       }
     }
+    const usersWithAvatars = await Promise.all(
+      filtered.map(async (u) => {
+        const profile = await this.store.getProfile(u.id);
+        return {
+          id: u.id,
+          username: u.username,
+          displayName: u.displayName,
+          avatarUrl: profile?.profile?.avatarUrl || null,
+        };
+      })
+    );
     return {
-      users: filtered.map(u => ({
-        id: u.id,
-        username: u.username,
-        displayName: u.displayName,
-      }))
+      users: usersWithAvatars,
     };
   }
 

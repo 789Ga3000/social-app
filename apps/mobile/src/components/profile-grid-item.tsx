@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native';
+import { View, Image, StyleSheet, Text, Pressable } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../lib/theme';
@@ -12,6 +12,7 @@ const isVideoUrl = (url?: string) => {
 
 interface ProfileGridItemProps {
   item: any;
+  onPress?: () => void;
 }
 
 const ProfileVideoThumbnail = ({ source, style }: { source: string; style: any }) => {
@@ -20,15 +21,15 @@ const ProfileVideoThumbnail = ({ source, style }: { source: string; style: any }
     player.muted = true;
     player.pause();
   });
-  return <VideoView player={player} style={style} contentFit="cover" />;
+  return <VideoView player={player} style={style} contentFit="cover" nativeControls={false} />;
 };
 
-export default function ProfileGridItem({ item }: ProfileGridItemProps) {
+export default function ProfileGridItem({ item, onPress }: ProfileGridItemProps) {
   const isVideo = isVideoUrl(item.imageUrl);
   const { colors } = useTheme();
 
   return (
-    <View style={styles.gridItem}>
+    <Pressable style={styles.gridItem} onPress={onPress}>
       {item.imageUrl ? (
         <View style={styles.mediaContainer}>
           {isVideo ? (
@@ -47,7 +48,7 @@ export default function ProfileGridItem({ item }: ProfileGridItemProps) {
           <Text numberOfLines={3} style={[styles.textPostCaption, { color: colors.textSecondary }]}>{item.caption}</Text>
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 

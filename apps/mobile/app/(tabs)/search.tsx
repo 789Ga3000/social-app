@@ -39,9 +39,13 @@ export default function SearchScreen() {
       style={styles.userRow}
       onPress={() => router.push(`/user/${item.username}` as any)}
     >
-      <View style={styles.avatarPlaceholder}>
-        <Text style={styles.avatarText}>{(item.username || '?')[0].toUpperCase()}</Text>
-      </View>
+      {item.avatarUrl ? (
+        <Image source={{ uri: item.avatarUrl }} style={styles.avatar} />
+      ) : (
+        <View style={styles.avatarPlaceholder}>
+          <Text style={styles.avatarText}>{(item.username || '?')[0].toUpperCase()}</Text>
+        </View>
+      )}
       <View>
         <Text style={styles.username}>{item.username}</Text>
         <Text style={styles.displayName}>{item.displayName}</Text>
@@ -132,6 +136,12 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: 12,
   },
   avatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },

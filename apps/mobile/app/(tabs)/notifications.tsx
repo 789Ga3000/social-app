@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,9 +82,13 @@ export default function NotificationsScreen() {
       onPress={() => handleNotificationPress(item)}
     >
       <View style={styles.avatarContainer}>
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>{(item.actor?.username || '?')[0].toUpperCase()}</Text>
-        </View>
+        {item.actor?.avatarUrl ? (
+          <Image source={{ uri: item.actor.avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarText}>{(item.actor?.username || '?')[0].toUpperCase()}</Text>
+          </View>
+        )}
         <View style={styles.iconBadge}>{getIcon(item.type)}</View>
       </View>
       
@@ -155,6 +159,11 @@ const getStyles = (colors: any) => StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   avatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   iconBadge: {

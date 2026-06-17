@@ -20,6 +20,23 @@ export default function CreatePostScreen() {
   const [caption, setCaption] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (imageUri && !isVideoUrl(imageUri)) {
+      Image.getSize(
+        imageUri,
+        (width, height) => {
+          if (width && height) {
+            setAspectRatio(width / height);
+          }
+        },
+        () => {}
+      );
+    } else {
+      setAspectRatio(null);
+    }
+  }, [imageUri]);
   
   const { user } = useAuth();
   const router = useRouter();
@@ -125,7 +142,11 @@ export default function CreatePostScreen() {
             {isVideo ? (
               <VideoView player={player} style={styles.imagePreview} contentFit="cover" />
             ) : (
-              <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
+              <Image 
+                source={{ uri: imageUri }} 
+                style={[styles.imagePreview, aspectRatio ? { aspectRatio, height: undefined } : null]} 
+                resizeMode="cover" 
+              />
             )}
             <TouchableOpacity style={styles.removeImageBtn} onPress={() => setImageUri(null)}>
               <Text style={styles.removeImageText}>X</Text>

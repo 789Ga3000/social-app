@@ -26,6 +26,7 @@ export default function RootLayout() {
         <Stack.Screen name="privacy" />
         <Stack.Screen name="terms" />
         <Stack.Screen name="admin" />
+        <Stack.Screen name="post/[id]" options={{ presentation: 'modal' }} />
       </Stack>
     </QueryClientProvider>
   );

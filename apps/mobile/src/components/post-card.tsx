@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import * as Clipboard from 'expo-clipboard';
+import PostOptionsSheet from './post-options-sheet';
 import api from '../lib/api';
 import { useAuth } from '../lib/auth-store';
 import { useTheme } from '../lib/theme';
@@ -114,6 +116,23 @@ const PostCard: React.FC<PostCardProps> = ({
   
   const isAdmin = currentUser?.role === 'ADMIN';
   const isOwnPost = post.author.id === currentUserId;
+
+  const [isOptionsVisible, setIsOptionsVisible] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (post.imageUrl && !isVideoUrl(post.imageUrl)) {
+      Image.getSize(
+        post.imageUrl,
+        (width, height) => {
+          if (width && height) {
+            setAspectRatio(width / height);
+          }
+        },
+        () => {}
+      );
+    }
+  }, [post.imageUrl]);
 
   // — Optimistic cache helper —
 
@@ -309,28 +328,15 @@ const PostCard: React.FC<PostCardProps> = ({
     );
   }, [post.author, blockMutation]);
 
+  const handleCopyLink = useCallback(async () => {
+    const postUrl = `https://coolgenz.com/post/${post.id}`;
+    await Clipboard.setStringAsync(postUrl);
+    Alert.alert('Link Copied', 'Post URL copied to clipboard.');
+  }, [post.id]);
+
   const handleMenuPress = useCallback(() => {
-    if (isOwnPost || isAdmin) {
-      Alert.alert(
-        'Post Options',
-        undefined,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete Post', style: 'destructive', onPress: handleDeletePress },
-        ]
-      );
-    } else {
-      Alert.alert(
-        'Post Options',
-        undefined,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Report Post', style: 'destructive', onPress: handleReportPress },
-          { text: 'Block User', style: 'destructive', onPress: handleBlockPress },
-        ]
-      );
-    }
-  }, [isOwnPost, isAdmin, handleDeletePress, handleReportPress, handleBlockPress]);
+    setIsOptionsVisible(true);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -404,7 +410,7 @@ const PostCard: React.FC<PostCardProps> = ({
         ) : (
           <Image
             source={{ uri: post.imageUrl }}
-            style={styles.postImage}
+            style={[styles.postImage, aspectRatio ? { aspectRatio } : null]}
             resizeMode="cover"
           />
         )
@@ -487,6 +493,17 @@ const PostCard: React.FC<PostCardProps> = ({
 
       {/* ── Timestamp ── */}
       <Text style={styles.timestamp}>{timeAgo(post.createdAt)}</Text>
+
+      <PostOptionsSheet
+        visible={isOptionsVisible}
+        onClose={() => setIsOptionsVisible(false)}
+        isOwnPost={isOwnPost}
+        isAdmin={isAdmin}
+        onReport={handleReportPress}
+        onBlock={handleBlockPress}
+        onDelete={handleDeletePress}
+        onCopyLink={handleCopyLink}
+      />
     </View>
   );
 };
